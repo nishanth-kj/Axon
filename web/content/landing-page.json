@@ -1,0 +1,17 @@
+{
+  "hero": {
+    "title": "AXON",
+    "subtitle": "Decentralized Privacy Infrastructure",
+    "cta": "Download Axon"
+  },
+  "features": [
+    {
+      "title": "Onion Routing",
+      "description": "Multi-layered encryption for ultimate anonymity."
+    },
+    {
+      "title": "Distributed Relay Mesh",
+      "description": "No single point of failure."
+    }
+  ]
+}

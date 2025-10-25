@@ -1,0 +1,90 @@
+# =========================
+# Rust
+# =========================
+target/
+Cargo.lock
+
+# =========================
+# Node / Web
+# =========================
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+
+# =========================
+# Flutter / Mobile
+# =========================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+build/
+
+# Android
+android/.gradle/
+android/app/build/
+
+# iOS
+ios/Pods/
+ios/Runner.xcworkspace/
+
+# =========================
+# Tauri
+# =========================
+src-tauri/target/
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+*.swp
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Environment
+# =========================
+.env
+.env.local
+.env.*
+
+# =========================
+# Temporary Files
+# =========================
+tmp/
+temp/
+.cache/
+
+# =========================
+# VPN / Network Runtime
+# =========================
+sessions/
+keys/
+certs/
+runtime/
+packets/
+captures/
+
+# =========================
+# Build Artifacts
+# =========================
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.obj
