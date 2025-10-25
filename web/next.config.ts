@@ -1,12 +1,18 @@
 import type { NextConfig } from "next";
 
+const isGithubActions = process.env.GITHUB_ACTIONS || false;
+let repo = "";
+
+if (isGithubActions && process.env.GITHUB_REPOSITORY) {
+  repo = process.env.GITHUB_REPOSITORY.replace(/.*?\//, "");
+}
+
 const nextConfig: NextConfig = {
   output: "export",
   images: {
     unoptimized: true,
   },
-  // Note: If deploying to https://<username>.github.io/<repo-name>/, uncomment the next line
-  // basePath: "/Axon",
+  basePath: repo ? `/${repo}` : "",
 };
 
 export default nextConfig;
