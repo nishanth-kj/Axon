@@ -1,0 +1,51 @@
+[
+  {
+    "id": "introduction",
+    "title": "Introduction",
+    "content": "Welcome to the Axon documentation. Axon is a decentralized privacy infrastructure designed to provide secure, anonymous networking for everyone."
+  },
+  {
+    "id": "getting-started",
+    "title": "Getting Started",
+    "content": "To start using Axon, you can download the client for your platform or use the CLI for advanced configuration.",
+    "code": "$ axon init",
+    "language": "bash"
+  },
+  {
+    "id": "api-reference",
+    "title": "API Reference",
+    "content": "The following endpoints allow nodes to register, send heartbeats, and fetch healthy nodes from the network.",
+    "endpoints": [
+      {
+        "id": "registry-api",
+        "title": "Registry API",
+        "method": "POST",
+        "path": "/api/v1/registry",
+        "description": "Registers or unregisters a proxy node in the Axon network. When registering (status: 1), the server responds with a 202 Accepted and asynchronously contacts the node to verify its identity.",
+        "payloadTitle": "Payload (JSON)",
+        "code": "{\n  \"port\": \"number\",\n  \"status\": \"number (1 to register, 0 to unregister. Note: node_id is required if status is 0)\"\n}",
+        "language": "json"
+      },
+      {
+        "id": "heartbeat-api",
+        "title": "Heartbeat API",
+        "method": "POST",
+        "path": "/api/v1/heartbeat",
+        "description": "Nodes must continuously ping this endpoint to prove they are alive. The node must provide the secret key it received during the asynchronous verification challenge.",
+        "payloadTitle": "Headers",
+        "code": "Authorization: Token <your-secret-key-received-from-registry>",
+        "language": "http"
+      },
+      {
+        "id": "nodes-api",
+        "title": "Nodes API",
+        "method": "GET",
+        "path": "/api/v1/nodes",
+        "description": "Retrieves a list of all currently active and healthy proxy nodes in the network.",
+        "payloadTitle": "Response (JSON)",
+        "code": "{\n  \"status\": 1,\n  \"data\": {\n    \"nodes\": [\n      {\n        \"node_id\": \"string\",\n        \"ip\": \"string\",\n        \"port\": 8080\n      }\n    ]\n  },\n  \"error\": null\n}",
+        "language": "json"
+      }
+    ]
+  }
+]
