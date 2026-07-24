@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "core",
+    "cli",
+    "desktop",
+    "axon-android/rust"
+]
+resolver = "2"

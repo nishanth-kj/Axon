@@ -9,15 +9,20 @@ export function getClientIp(request: Request, fallbackIp?: string): string {
   const forwardedFor = request.headers.get("x-forwarded-for");
   const realIp = request.headers.get("x-real-ip");
   
+  let finalIp = fallbackIp || "unknown";
+  
   if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
+    finalIp = forwardedFor.split(',')[0].trim();
+  } else if (realIp) {
+    finalIp = realIp.trim();
   }
-  
-  if (realIp) {
-    return realIp.trim();
+
+  // Clean up IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1 -> 127.0.0.1)
+  if (finalIp.startsWith("::ffff:")) {
+    finalIp = finalIp.replace("::ffff:", "");
   }
-  
-  return fallbackIp || "unknown";
+
+  return finalIp;
 }
 
 /**

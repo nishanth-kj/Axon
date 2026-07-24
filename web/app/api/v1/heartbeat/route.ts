@@ -34,9 +34,9 @@ export async function POST(request: Request) {
       let errorCode = ErrorCode.INTERNAL_ERROR;
       let errorMessage = ErrorMessage.INTERNAL_ERROR;
       
-      if (result.code === 404) {
-        errorCode = ErrorCode.NODE_NOT_FOUND;
-        errorMessage = ErrorMessage.NODE_NOT_FOUND;
+      if (result.code === 401) {
+        errorCode = ErrorCode.UNREGISTERED_NODE;
+        errorMessage = ErrorMessage.UNREGISTERED_NODE;
       } else if (result.code === 403) {
         errorCode = ErrorCode.IP_MISMATCH;
         errorMessage = ErrorMessage.IP_MISMATCH;

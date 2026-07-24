@@ -5,6 +5,7 @@ export enum ErrorCode {
   NODE_NOT_FOUND = 404,
   IP_MISMATCH = 403,
   INVALID_SECRET = 403,
+  UNREGISTERED_NODE = 401,
   INTERNAL_ERROR = 500,
 }
 
@@ -15,5 +16,6 @@ export enum ErrorMessage {
   NODE_NOT_FOUND = "Node not found in registry",
   IP_MISMATCH = "IP mismatch",
   INVALID_SECRET = "Invalid secret key",
+  UNREGISTERED_NODE = "Node is not registered or session expired",
   INTERNAL_ERROR = "Internal server error",
 }

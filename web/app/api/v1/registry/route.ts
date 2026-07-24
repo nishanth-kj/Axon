@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    let { status, node_id, port } = body;
+    let { status, node_id, port, verification_port } = body;
 
     // Securely extract the IP from the request headers
     const ip = getClientIp(request);
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     // Register
     if (status === 1) {
       const generatedNodeId = node_id || crypto.randomUUID();
-      await nodeService.registerNode(generatedNodeId, ip, port);
+      await nodeService.registerNode(generatedNodeId, ip, port, verification_port);
       return new ApiResponse().success({ message: SuccessMessage.REGISTRATION_PENDING, node_id: generatedNodeId }, 202);
     }
 

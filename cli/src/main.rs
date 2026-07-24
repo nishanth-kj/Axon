@@ -1,7 +1,10 @@
-use core::logger;
+use axon_core::logger;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     logger::init();
     println!("CLI starting up...");
-    core::run_core_logic();
+    
+    // Server URL, Axum Port, Server Port, Client Port, Secret Key, Use Tor
+    axon_core::node::run_node("http://127.0.0.1:3000", 8080, 8081, 1080, "Nishanth", false).await;
 }

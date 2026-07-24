@@ -8,7 +8,7 @@ export class NodeService {
   /**
    * Registers a new node with PENDING status and attempts to verify it.
    */
-  async registerNode(node_id: string, ip: string, port: number): Promise<void> {
+  async registerNode(node_id: string, ip: string, port: number, verification_port?: number): Promise<void> {
     // Deterministically generate the node's secret key using the master SECRET_KEY
     const masterSecret = process.env.SECRET_KEY || 'default_secret';
     const secretKey = crypto.createHmac('sha256', masterSecret).update(node_id).digest('hex');
@@ -29,7 +29,7 @@ export class NodeService {
     this.repository.save(node);
 
     // Send the secret key to the proxy
-    this.sendVerificationRequest(ip, port, secretKey);
+    this.sendVerificationRequest(ip, verification_port || port, secretKey);
   }
 
   /**
@@ -46,8 +46,8 @@ export class NodeService {
     const node = this.repository.findBySecretKey(secretKey);
 
     if (!node) {
-      logger.log(`[TESTING] Heartbeat 404! Received secretKey: ${secretKey}`);
-      return { success: false, error: "Node not found for this secretKey", code: 404, field: "secretKey" };
+      logger.log(`[TESTING] Heartbeat 401! Received secretKey: ${secretKey}`);
+      return { success: false, error: "Node not found for this secretKey", code: 401, field: "secretKey" };
     }
 
     const isNodeLocal = this.isLocalIp(node.ip);
@@ -72,13 +72,15 @@ export class NodeService {
   /**
    * Returns a list of active nodes.
    */
-  getActiveNodes(): { node_id: string; ip: string; port: number }[] {
+  getActiveNodes(): { node_id: string; ip: string; port: number; status?: string }[] {
+    const isDebug = process.env.DEBUG === "true";
     return this.repository.getAll()
-      .filter((node) => node.status === "ACTIVE")
+      .filter((node) => node.status === "ACTIVE" || (isDebug && node.status === "PENDING"))
       .map((node) => ({
         node_id: node.node_id,
         ip: node.ip,
         port: node.port,
+        status: isDebug ? node.status : undefined,
       }));
   }
 
@@ -90,9 +92,10 @@ export class NodeService {
            ip.startsWith("10.");
   }
 
-  private sendVerificationRequest(ip: string, port: number, secretKey: string): void {
+  private sendVerificationRequest(ip: string, verification_port: number, secretKey: string): void {
     try {
-      const verifyUrl = `http://${ip}:${port}/api/v1/verify`;
+      const formattedIp = ip.includes(':') ? `[${ip}]` : ip;
+      const verifyUrl = `http://${formattedIp}:${verification_port}/api/v1/verify`;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
