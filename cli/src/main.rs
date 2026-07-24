@@ -1,3 +1,7 @@
+use core::logger;
+
 fn main() {
-    println!("Hello, world!");
+    logger::init();
+    println!("CLI starting up...");
+    core::run_core_logic();
 }
