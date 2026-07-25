@@ -38,6 +38,8 @@ jobs:
         run: npm run build
         env:
           STATIC_EXPORT: "true"
+          DEBUG: "true"
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
