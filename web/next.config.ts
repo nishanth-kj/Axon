@@ -5,9 +5,6 @@ let basePath = "";
 if (isGithubActions && process.env.GITHUB_REPOSITORY) {
   const repoName = process.env.GITHUB_REPOSITORY.replace(/.*?\//, "");
   basePath = `/${repoName}`;
-  if (process.env.DEPLOY_ENV === "development") {
-    basePath += "/dev";
-  }
 }
 
 const nextConfig: NextConfig = {

@@ -1,8 +1,7 @@
 # Axon: Decentralized Proxy Network
 
-**Live Environments:**
+**Live Environment:**
 - 🌍 **Production**: [https://nishanth-kj.github.io/Axon](https://nishanth-kj.github.io/Axon)
-- 🧪 **Development**: [https://nishanth-kj.github.io/Axon/dev](https://nishanth-kj.github.io/Axon/dev)
 
 Axon is a decentralized, peer-to-peer proxy network built with Rust and Next.js. It allows users to route their internet traffic securely and anonymously through a network of volunteer nodes, similar to Tor, but with a custom architecture. 
 
