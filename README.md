@@ -46,6 +46,11 @@ Because Axon is designed to run anywhere, the logic is heavily modularized into 
 
 ### 🌐 Web Coordinator
 - **`web/`**: The Next.js Web Coordinator, Dashboard, and Registry API.
+  - Contains the **/nodes** dashboard which provides real-time telemetry on active relay nodes.
+  - **Environment Variables** (`web/.env`):
+    - `DEBUG=true` - Enables verbose logging
+    - `SECRET_KEY=...` - Required token secret for node verification
+    - `STATIC_EXPORT=true|false` - Set to `true` to export a purely static UI (for GitHub Pages). Note that enabling this breaks the Next.js API route backends. Use `false` if deploying to Vercel/Render.
   - **How to run**: 
     ```bash
     cd web

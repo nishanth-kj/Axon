@@ -8,6 +8,7 @@ if (isGithubActions && process.env.GITHUB_REPOSITORY) {
 }
 
 const nextConfig: NextConfig = {
+  output: process.env.STATIC_EXPORT === "true" ? "export" : undefined,
   images: {
     unoptimized: true,
   },
