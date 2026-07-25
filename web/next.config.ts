@@ -9,6 +9,9 @@ if (isGithubActions && process.env.GITHUB_REPOSITORY) {
 
 const nextConfig: NextConfig = {
   output: process.env.STATIC_EXPORT === "true" ? "export" : undefined,
+  pageExtensions: process.env.STATIC_EXPORT === "true" 
+    ? ["tsx", "jsx"] 
+    : ["ts", "tsx", "js", "jsx"],
   images: {
     unoptimized: true,
   },
