@@ -1,10 +1,13 @@
 import type { NextConfig } from "next";
 
 const isGithubActions = process.env.GITHUB_ACTIONS || false;
-let repo = "";
-
+let basePath = "";
 if (isGithubActions && process.env.GITHUB_REPOSITORY) {
-  repo = process.env.GITHUB_REPOSITORY.replace(/.*?\//, "");
+  const repoName = process.env.GITHUB_REPOSITORY.replace(/.*?\//, "");
+  basePath = `/${repoName}`;
+  if (process.env.DEPLOY_ENV === "development") {
+    basePath += "/dev";
+  }
 }
 
 const nextConfig: NextConfig = {
@@ -15,7 +18,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: repo ? `/${repo}` : "",
+  basePath: basePath || "",
 };
 
 export default nextConfig;

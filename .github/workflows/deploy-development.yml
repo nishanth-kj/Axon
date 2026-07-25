@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -40,9 +40,11 @@ jobs:
           STATIC_EXPORT: "true"
           DEBUG: "true"
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+          DEPLOY_ENV: "development"
+          
+      - name: Deploy to GitHub Pages (dev)
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: ./web/out
-
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./web/out
+          destination_dir: dev
