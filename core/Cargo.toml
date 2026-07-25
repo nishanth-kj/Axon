@@ -1,10 +1,11 @@
 [package]
-name = "core"
+name = "axon_core"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 android_logger = "0.15.1"
+artiqwest = "0.4.0"
 axum = "0.8.9"
 env_logger = "0.11.11"
 fast-socks5 = "1.0.0"

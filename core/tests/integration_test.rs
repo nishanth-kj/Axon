@@ -1,4 +1,4 @@
-use core::proxy::client::test_random_proxy_request;
+use axon_core::proxy::client::test_random_proxy_request;
 
 #[tokio::test]
 async fn test_proxy_routing() {

@@ -79,20 +79,34 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         loop {
-            let (secret_key, last_check) = {
+            let (secret_key, _last_check) = {
                 let s = state_clone.lock().await;
                 (s.secret_key.clone(), s.last_health_check)
             };
 
-            if secret_key.is_some() {
-                if let Some(last) = last_check {
-                    if last.elapsed() > Duration::from_secs(30) {
-                        log::warn!("No health check from server in 30s. Clearing secret key to re-register...");
-                        let mut s = state_clone.lock().await;
-                        s.secret_key = None;
-                        s.last_health_check = None;
+            if let Some(secret) = &secret_key {
+                let heartbeat_url = format!("{}/api/v1/heartbeat", server_url_bg);
+                let res = client_clone.post(&heartbeat_url)
+                    .header("Authorization", format!("Token {}", secret))
+                    .send()
+                    .await;
+
+                match res {
+                    Ok(resp) => {
+                        if !resp.status().is_success() {
+                            log::warn!("Heartbeat failed ({}). Clearing secret key to re-register...", resp.status());
+                            let mut s = state_clone.lock().await;
+                            s.secret_key = None;
+                            s.last_health_check = None;
+                        } else {
+                            log::debug!("Heartbeat successful!");
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Failed to send heartbeat to server: {}", e);
                     }
                 }
+
             } else {
                 log::info!("No active secret key. Registering with server {}...", server_url_bg);
                 let registry_url = format!("{}/api/v1/registry", server_url_bg);
@@ -116,7 +130,11 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
                 }
             }
 
-            tokio::time::sleep(Duration::from_secs(5)).await;
+            let interval = std::env::var("HEARTBEAT_INTERVAL_SECS")
+                .ok()
+                .and_then(|v| v.parse::<u64>().ok())
+                .unwrap_or_else(|| if cfg!(debug_assertions) { 5 } else { 30 });
+            tokio::time::sleep(Duration::from_secs(interval)).await;
         }
     });
 

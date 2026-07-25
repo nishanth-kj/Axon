@@ -11,15 +11,15 @@ Since Axon relies on peer-to-peer proxying, nodes need a way to discover each ot
 The registry relies on a strict handshake and heartbeat protocol to ensure nodes are actually alive before distributing their IPs to clients.
 
 ### 1. Registration (`POST /api/v1/registry`)
-When a node starts up, it hits this endpoint to declare its presence.
+When a node starts up, it hits this endpoint to declare its presence. The response does *not* contain the token.
 - **Payload**: `{ status: 1, port: <server_port> }`
 - **Action**: The registry records the node's IP address (from the incoming HTTP request header) and its designated `server_port`. It marks the node as "PENDING".
-- **Callback**: The registry immediately makes an outbound POST request *back* to the node's IP on port 8080 (`/api/v1/verify`), providing a unique `secretKey`.
+- **Callback**: To verify reachability, the registry immediately makes an outbound POST request *back* to the node's IP on port 8080 (`/api/v1/verify`), providing a unique `secretKey`. The node receives and saves this token.
 
 ### 2. Heartbeat (`POST /api/v1/heartbeat`)
-Nodes must prove they are still alive by pinging this endpoint every 10 seconds.
+Nodes must prove they are still alive by pinging this endpoint periodically (every 5 to 30 seconds).
 - **Headers**: `Authorization: Token <secretKey>`
-- **Action**: If the `secretKey` is valid, the node's status is updated to "ACTIVE". If a node misses too many heartbeats, it is marked as "OFFLINE" and removed from the active peer list.
+- **Action**: If the `secretKey` is valid, the node's status is updated to "ACTIVE". If the token is invalid or the node misses too many heartbeats, it is marked as "OFFLINE" and removed from the active peer list. If the client receives an error, it deletes its token and re-registers.
 
 ### 3. Node Discovery (`GET /api/v1/nodes`)
 This is the endpoint queried by the Client Proxy component of an Axon node.
