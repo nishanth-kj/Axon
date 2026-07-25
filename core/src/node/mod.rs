@@ -1,5 +1,5 @@
 use axum::{
-    routing::post,
+    routing::{post, get},
     Router, Json,
 };
 use reqwest;
@@ -24,10 +24,11 @@ struct RegistryPayload {
 
 struct AppState {
     secret_key: Option<String>,
+    last_health_check: Option<std::time::Instant>,
 }
 
-pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client_port: u16, master_secret: &str, use_tor: bool) {
-    let state = Arc::new(Mutex::new(AppState { secret_key: None }));
+pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client_port: u16, master_secret: &str, use_tor: bool, use_vpn: bool) {
+    let state = Arc::new(Mutex::new(AppState { secret_key: None, last_health_check: None }));
     let state_clone = state.clone();
 
     // Create HTTP Client (with optional Tor SOCKS proxy)
@@ -53,6 +54,18 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
                     log::info!("Received verification callback with secretKey!");
                     let mut s = state.lock().await;
                     s.secret_key = Some(payload.secret_key);
+                    s.last_health_check = Some(std::time::Instant::now());
+                    "OK"
+                }
+            }
+        }))
+        .route("/api/v1/health", get({
+            let state = state.clone();
+            move || {
+                let state = state.clone();
+                async move {
+                    let mut s = state.lock().await;
+                    s.last_health_check = Some(std::time::Instant::now());
                     "OK"
                 }
             }
@@ -66,30 +79,19 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         loop {
-            let secret_key = {
+            let (secret_key, last_check) = {
                 let s = state_clone.lock().await;
-                s.secret_key.clone()
+                (s.secret_key.clone(), s.last_health_check)
             };
 
-            if let Some(key) = secret_key {
-                log::debug!("Sending heartbeat...");
-                let heartbeat_url = format!("{}/api/v1/heartbeat", server_url_bg);
-                let hb_res = client_clone.post(&heartbeat_url)
-                    .header("Authorization", format!("Token {}", key))
-                    .send()
-                    .await;
-
-                match hb_res {
-                    Ok(resp) => {
-                        if !resp.status().is_success() {
-                            log::warn!("Heartbeat rejected ({}). Clearing secret key to trigger re-registration.", resp.status());
-                            let mut s = state_clone.lock().await;
-                            s.secret_key = None;
-                        } else {
-                            log::debug!("Heartbeat acknowledged.");
-                        }
+            if secret_key.is_some() {
+                if let Some(last) = last_check {
+                    if last.elapsed() > Duration::from_secs(30) {
+                        log::warn!("No health check from server in 30s. Clearing secret key to re-register...");
+                        let mut s = state_clone.lock().await;
+                        s.secret_key = None;
+                        s.last_health_check = None;
                     }
-                    Err(e) => log::error!("Heartbeat failed to send: {}", e),
                 }
             } else {
                 log::info!("No active secret key. Registering with server {}...", server_url_bg);
@@ -104,6 +106,8 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
                     Ok(resp) => {
                         if resp.status().is_success() {
                             log::info!("Registration pending! Waiting for verification callback...");
+                            let mut s = state_clone.lock().await;
+                            s.last_health_check = Some(std::time::Instant::now());
                         } else {
                             log::error!("Registration failed: {:?}", resp.status());
                         }
@@ -112,7 +116,7 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
                 }
             }
 
-            tokio::time::sleep(Duration::from_secs(10)).await;
+            tokio::time::sleep(Duration::from_secs(5)).await;
         }
     });
 
@@ -126,6 +130,13 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
     tokio::spawn(async move {
         proxy::client::start_client_proxy(client_port, &server_url_client).await;
     });
+
+    if use_vpn {
+        let server_url_vpn = server_url.to_string();
+        tokio::spawn(async move {
+            crate::vpn::tun_adapter::start_vpn_service(server_url_vpn).await;
+        });
+    }
 
     // Start local Axum server
     let addr = format!("0.0.0.0:{}", axum_port);

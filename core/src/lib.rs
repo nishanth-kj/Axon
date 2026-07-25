@@ -1,6 +1,7 @@
 pub mod logger;
 pub mod node;
 pub mod proxy;
+pub mod vpn;
 
 pub fn run_core_logic() {
     log::info!("Executing core logic...");

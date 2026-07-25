@@ -6,6 +6,7 @@ export interface ProxyNode {
   node_id: string;
   ip: string;
   port: number;
+  verification_port: number;
   status: "ACTIVE" | "OFFLINE" | "PENDING";
   secret_key?: string;
   last_seen: string;

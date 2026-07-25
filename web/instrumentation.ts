@@ -8,44 +8,43 @@ export async function register() {
 
     // Avoid multiple intervals in dev mode hot-reloading
     if (!globalThis.healthCheckInterval) {
-      globalThis.healthCheckInterval = setInterval(() => {
+      globalThis.healthCheckInterval = setInterval(async () => {
         const nodes = nodeRepository.getAll();
         const nowMs = Date.now();
 
         for (const node of nodes) {
           const node_id = node.node_id;
-          // Check if the proxy missed the last challenge (more than 15s since last seen)
-          const lastSeenMs = new Date(node.last_seen).getTime();
           
-          if (nowMs - lastSeenMs > 15000) {
+          try {
+            const healthUrl = `http://${node.ip}:${node.verification_port}/api/v1/health`;
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            const response = await fetch(healthUrl, {
+              method: "GET",
+              signal: controller.signal,
+            }).finally(() => clearTimeout(timeoutId));
+
+            if (response.ok) {
+              node.last_seen = new Date().toISOString();
+              node.failure_count = 0;
+              nodeRepository.save(node);
+              continue; // Health check passed!
+            } else {
+              throw new Error("Health check returned non-200");
+            }
+          } catch (error) {
+            // Node failed to respond
             node.failure_count += 1;
-            logger.warn(`Node ${node_id} failed to callback in time. Failures: ${node.failure_count}`);
+            logger.warn(`Node ${node_id} health check failed. Failures: ${node.failure_count}`);
             
             if (node.failure_count >= 3) {
               logger.log(`Node ${node_id} removed from registry after 3 failures.`);
               nodeRepository.delete(node_id);
-              continue;
+            } else {
+              nodeRepository.save(node);
             }
-          }
-
-          // Generate the deterministic secret and challenge the proxy
-          const masterSecret = process.env.SECRET_KEY || 'default_secret';
-          const newSecret = crypto.createHmac('sha256', masterSecret).update(node_id).digest('hex');
-          node.secret_key = newSecret;
-          nodeRepository.save(node);
-
-          try {
-            const verifyUrl = `http://${node.ip}:${node.port}/api/v1/verify`;
-            
-            fetch(verifyUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ secretKey: newSecret }),
-            }).catch(() => {
-              // Fire and forget; if the proxy is down, it won't callback and failure_count will increase next tick
-            });
-          } catch (error) {
-            // Ignore fetch errors
           }
         }
       }, 10000); // 10 seconds

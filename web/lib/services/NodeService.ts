@@ -9,6 +9,13 @@ export class NodeService {
    * Registers a new node with PENDING status and attempts to verify it.
    */
   async registerNode(node_id: string, ip: string, port: number, verification_port?: number): Promise<void> {
+    // Evict any existing nodes sharing this physical endpoint (IP:Port) to prevent duplicates
+    const existingNodes = this.repository.getAll().filter(n => n.ip === ip && n.port === port);
+    for (const oldNode of existingNodes) {
+      logger.log(`Evicting old node ${oldNode.node_id} at ${ip}:${port} due to new registration`);
+      this.repository.delete(oldNode.node_id);
+    }
+
     // Deterministically generate the node's secret key using the master SECRET_KEY
     const masterSecret = process.env.SECRET_KEY || 'default_secret';
     const secretKey = crypto.createHmac('sha256', masterSecret).update(node_id).digest('hex');
@@ -19,6 +26,7 @@ export class NodeService {
       node_id,
       ip,
       port,
+      verification_port: verification_port || port,
       status: "PENDING",
       secret_key: secretKey,
       last_seen: now,
@@ -70,7 +78,7 @@ export class NodeService {
   }
 
   /**
-   * Returns a list of active nodes.
+   * Returns a list of active nodes for public routing.
    */
   getActiveNodes(): { node_id: string; ip: string; port: number; status?: string }[] {
     const isDebug = process.env.DEBUG === "true";
@@ -82,6 +90,16 @@ export class NodeService {
         port: node.port,
         status: isDebug ? node.status : undefined,
       }));
+  }
+
+  /**
+   * Returns all nodes with full telemetry details (excluding secret_key) for the dashboard.
+   */
+  getAllNodeDetails(): Omit<ProxyNode, "secret_key">[] {
+    return this.repository.getAll().map((node) => {
+      const { secret_key, ...details } = node;
+      return details;
+    });
   }
 
   private isLocalIp(ip: string): boolean {
