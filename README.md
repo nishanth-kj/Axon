@@ -51,6 +51,10 @@ At the same time, the node spins up a **Local SOCKS5 Proxy** (e.g., `127.0.0.1:1
 
 ---
 
+## Development and security status
+
+Axon is an active work in progress, not yet a production-ready anonymity network. Review [Security and Development](docs/SECURITY_AND_DEVELOPMENT.md) before running nodes, especially before exposing relay ports to the public internet. Tor mode requires a local Tor SOCKS5 listener at `127.0.0.1:9050`; the relay now fails closed when that service is unavailable instead of silently falling back to direct connections.
+
 ## 📁 Directory Structure & How to Run
 
 Because Axon is designed to run anywhere, the logic is heavily modularized into several directories:
