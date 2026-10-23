@@ -1,0 +1,8 @@
+target
+web/node_modules
+web/.next
+.git
+axon-android/.gradle
+axon-android/app/build
+axon-android/build
+**/*.webp

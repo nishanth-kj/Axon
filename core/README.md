@@ -29,7 +29,7 @@ The node provides a local entry point for the user to securely browse the intern
 
 For testing and local development, the `core` library expects certain environment variables (which can be loaded via a `.env` file):
 
-- `REGISTRY_URL`: The URL of the central web coordinator (default: `http://localhost:3000`).
+- `REGISTRY_URL`: The URL of the Actix registry (default for the CLI: `http://127.0.0.1:7400`).
 
 ## Testing
 

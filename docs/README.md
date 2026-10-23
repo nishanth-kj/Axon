@@ -13,7 +13,8 @@ This folder contains deep-dive explanations of the entire codebase. Please refer
 ```text
 c:\Projects\Axon\
 ├── docs/             # You are here!
-├── web/              # Next.js Central Web Coordinator (Registry)
+├── server/           # Actix central registry (Dockerized)
+├── web/              # Next.js site and node dashboard
 ├── core/             # Rust Library (The Brains of the Proxy)
 ├── cli/              # Rust CLI Wrapper using `core/`
 ├── desktop/          # Rust Desktop GUI Wrapper using `core/`

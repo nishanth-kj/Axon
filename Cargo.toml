@@ -3,6 +3,7 @@ members = [
     "core",
     "cli",
     "desktop",
+    "server",
     "axon-android/rust"
 ]
 resolver = "2"

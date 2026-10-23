@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ChevronUp, ChevronDown, Activity, AlertCircle, Clock, Hash, Globe, Link2, RefreshCw } from "lucide-react";
-import { formatDistanceToNow, parseISO } from "date-fns";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { fetchNodePage, formatNodeAge, formatNodeTime, registryUrl, type RegistryNode } from "@/lib/registry";
 
 export default function NodesPage() {
-  const [nodes, setNodes] = useState<any[]>([]);
+  const [nodes, setNodes] = useState<RegistryNode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
@@ -21,27 +22,25 @@ export default function NodesPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
 
-  const fetchNodes = async () => {
-    setLoading(true);
+  const fetchNodes = async (background = false) => {
+    if (!background) setLoading(true);
     try {
-      const response = await fetch("/api/v1/nodes/details", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ page, size, sortBy, sortOrder })
-      });
-      const result = await response.json();
-      if (result.status === 1 && result.data) {
-        setNodes(result.data.nodes);
-        setPagination(result.data.pagination);
-      }
-    } catch (error) {
-      console.error("Failed to fetch nodes:", error);
+      const result = await fetchNodePage(page, size, sortBy, sortOrder);
+      setNodes(result.nodes);
+      setPagination(result.pagination);
+      setError(null);
+    } catch (cause) {
+      setNodes([]);
+      setPagination({ total: 0, totalPages: 0 });
+      setError(cause instanceof Error ? cause.message : "Could not reach the registry.");
     }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchNodes();
+    const timer = setInterval(() => fetchNodes(true), 8000);
+    return () => clearInterval(timer);
   }, [page, size, sortBy, sortOrder]);
 
   const handleSort = (column: string) => {
@@ -80,7 +79,7 @@ export default function NodesPage() {
               <Globe className="w-8 h-8 text-primary" />
               Network Nodes
             </h1>
-            <p className="text-muted-foreground mt-2">Active peers routing traffic on the Axon network</p>
+            <p className="text-muted-foreground mt-2">Peers registered with {registryUrl}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full md:w-auto">
             <Badge variant="outline" className="px-4 py-2 text-sm rounded-xl whitespace-nowrap">
@@ -127,7 +126,13 @@ export default function NodesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading && nodes.length === 0 ? (
+                {error ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                      Could not load nodes. {error}
+                    </TableCell>
+                  </TableRow>
+                ) : loading && nodes.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                       <div className="flex justify-center items-center gap-3">
@@ -146,7 +151,7 @@ export default function NodesPage() {
                   nodes.map((node) => (
                     <TableRow key={node.node_id} className="group">
                       <TableCell className="font-mono text-sm text-muted-foreground">
-                        {node.node_id.substring(0, 16)}...
+                        {node.node_id.length > 16 ? `${node.node_id.slice(0, 16)}…` : node.node_id}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -158,11 +163,11 @@ export default function NodesPage() {
                         {getStatusBadge(node.status)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                        {new Date(node.registered_at).toLocaleString()}
+                        {formatNodeTime(node.registered_at)}
                       </TableCell>
                       <TableCell className="text-sm whitespace-nowrap">
                         <Badge variant="outline" className="text-primary font-normal">
-                          {formatDistanceToNow(parseISO(node.last_seen), { addSuffix: true })}
+                          {formatNodeAge(node.last_seen)}
                         </Badge>
                       </TableCell>
                     </TableRow>

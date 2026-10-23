@@ -4,7 +4,13 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 pub async fn start_socks5_server(port: u16, use_tor: bool) {
     let addr = format!("0.0.0.0:{}", port);
-    let listener = TcpListener::bind(&addr).await.expect("Failed to bind SOCKS5 server");
+    let listener = match TcpListener::bind(&addr).await {
+        Ok(listener) => listener,
+        Err(error) => {
+            log::error!("Failed to bind SOCKS5 relay on {addr}: {error}");
+            return;
+        }
+    };
     log::info!("SOCKS5 Proxy listening on {}", addr);
 
     loop {

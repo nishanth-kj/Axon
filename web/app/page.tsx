@@ -2,6 +2,7 @@ import { Hero } from "@/components/sections/Hero";
 import { Features } from "@/components/sections/Features";
 import { Architecture } from "@/components/sections/Architecture";
 import { OpenSource } from "@/components/sections/OpenSource";
+import { LiveNodes } from "@/components/sections/LiveNodes";
 import { Platforms } from "@/components/sections/Platforms";
 import { Footer } from "@/components/Footer";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +24,8 @@ export default function Home() {
         <Features />
         <Separator className="container max-w-5xl mx-auto opacity-50" />
         <Architecture />
+        <Separator className="container max-w-5xl mx-auto opacity-50" />
+        <LiveNodes />
         <Separator className="container max-w-5xl mx-auto opacity-50" />
         <OpenSource />
         <Platforms />

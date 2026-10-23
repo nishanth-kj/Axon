@@ -22,6 +22,7 @@ export const Footer = () => {
               <span className="text-sm font-heading font-bold tracking-tight">Axon</span>
             </Link>
             <nav className="flex gap-6 text-xs font-medium text-muted-foreground">
+              <Link href="/nodes" className="hover:text-foreground transition-colors">Nodes</Link>
               <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
               <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>

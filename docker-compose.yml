@@ -1,0 +1,16 @@
+services:
+  registry:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: axon-registry
+    ports:
+      - "7400:7400"
+    environment:
+      AXON_BIND: 0.0.0.0:7400
+      SECRET_KEY: ${SECRET_KEY:-Nishanth}
+      DEBUG: ${DEBUG:-false}
+      RUST_LOG: info
+      HEALTH_INTERVAL_SECS: ${HEALTH_INTERVAL_SECS:-10}
+      HEALTH_FAILS: ${HEALTH_FAILS:-3}
+    restart: unless-stopped

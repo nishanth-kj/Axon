@@ -3,6 +3,7 @@
 # =========================
 target/
 Cargo.lock
+server.log
 
 # =========================
 # Node / Web

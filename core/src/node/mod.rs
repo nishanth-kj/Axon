@@ -158,7 +158,15 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
 
     // Start local Axum server
     let addr = format!("0.0.0.0:{}", axum_port);
+    let listener = match tokio::net::TcpListener::bind(&addr).await {
+        Ok(listener) => listener,
+        Err(error) => {
+            log::error!("Failed to bind verification listener on {addr}: {error}");
+            return;
+        }
+    };
     log::info!("Node verification callback listening on {}", addr);
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    if let Err(error) = axum::serve(listener, app).await {
+        log::error!("Verification listener stopped: {error}");
+    }
 }

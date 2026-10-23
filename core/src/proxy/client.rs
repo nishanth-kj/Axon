@@ -10,14 +10,26 @@ pub struct ActiveNode {
     pub port: u16,
 }
 
-#[derive(Deserialize, Debug)]
-struct NodesResponse {
-    nodes: Vec<ActiveNode>,
+/// The registry envelope is `{ "status", "data": { "nodes": [...] } }`.
+/// A bare `{ "nodes": [...] }` body is accepted as well.
+fn parse_active_nodes(body: &str) -> Option<Vec<ActiveNode>> {
+    let value: serde_json::Value = serde_json::from_str(body).ok()?;
+    let nodes = value
+        .get("data")
+        .and_then(|data| data.get("nodes"))
+        .or_else(|| value.get("nodes"))?;
+    serde_json::from_value(nodes.clone()).ok()
 }
 
 pub async fn start_client_proxy(local_port: u16, registry_url: &str) {
     let addr = format!("127.0.0.1:{}", local_port);
-    let listener = TcpListener::bind(&addr).await.expect("Failed to bind Client SOCKS5 server");
+    let listener = match TcpListener::bind(&addr).await {
+        Ok(listener) => listener,
+        Err(error) => {
+            log::error!("Failed to bind local SOCKS5 proxy on {addr}: {error}");
+            return;
+        }
+    };
     log::info!("Local Client Proxy listening on {}", addr);
 
     let client = Client::new();
@@ -34,14 +46,18 @@ pub async fn start_client_proxy(local_port: u16, registry_url: &str) {
                 let nodes_result = client_clone.get(&nodes_url).send().await;
                 
                 if let Ok(resp) = nodes_result {
-                    if let Ok(json) = resp.json::<NodesResponse>().await {
-                        if json.nodes.is_empty() {
+                    if let Ok(body) = resp.text().await {
+                        let Some(nodes) = parse_active_nodes(&body) else {
+                            log::warn!("Registry returned a node list the client could not read.");
+                            return;
+                        };
+                        if nodes.is_empty() {
                             log::warn!("No active nodes available in the Axon network.");
                             return;
                         }
                         
                         // Pick a random node (For simplicity, just pick the first one right now)
-                        let target_node = &json.nodes[0];
+                        let target_node = &nodes[0];
                         log::info!("Routing local request through Axon peer: {}:{}", target_node.ip, target_node.port);
                         
                         // Forward to remote peer
@@ -71,14 +87,18 @@ pub async fn test_random_proxy_request() {
     let nodes_url = format!("{}/api/v1/nodes", registry_url);
     
     if let Ok(resp) = client.get(&nodes_url).send().await {
-        if let Ok(json) = resp.json::<NodesResponse>().await {
-            if json.nodes.is_empty() {
+        if let Ok(body) = resp.text().await {
+            let Some(nodes) = parse_active_nodes(&body) else {
+                log::error!("Test: Registry response did not contain a node list.");
+                return;
+            };
+            if nodes.is_empty() {
                 log::warn!("Test: No proxies available.");
                 return;
             }
 
             // Pick random proxy (first one for now)
-            let proxy_node = &json.nodes[0];
+            let proxy_node = &nodes[0];
             let proxy_url = format!("socks5h://{}:{}", proxy_node.ip, proxy_node.port);
             log::info!("Test: Connecting through random proxy: {}", proxy_url);
 
@@ -109,14 +129,18 @@ pub async fn route_vpn_stream(vpn_stream: ipstack::IpStackTcpStream, target: std
     let nodes_url = format!("{}/api/v1/nodes", registry_url);
     
     if let Ok(resp) = client.get(&nodes_url).send().await {
-        if let Ok(json) = resp.json::<NodesResponse>().await {
-            if json.nodes.is_empty() {
+        if let Ok(body) = resp.text().await {
+            let Some(nodes) = parse_active_nodes(&body) else {
+                log::warn!("Registry returned a node list the client could not read.");
+                return;
+            };
+            if nodes.is_empty() {
                 log::warn!("No active nodes available in the Axon network for VPN route.");
                 return;
             }
             
             // Pick a random node
-            let target_node = &json.nodes[0];
+            let target_node = &nodes[0];
             log::info!("VPN routing request for {} through Axon peer: {}:{}", target, target_node.ip, target_node.port);
             
             if let Ok(mut remote_stream) = TcpStream::connect(format!("{}:{}", target_node.ip, target_node.port)).await {
