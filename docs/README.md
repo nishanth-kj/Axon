@@ -17,6 +17,6 @@ c:\Projects\Axon\
 ├── web/              # Next.js site and node dashboard
 ├── core/             # Rust Library (The Brains of the Proxy)
 ├── cli/              # Rust CLI Wrapper using `core/`
-├── desktop/          # Rust Desktop GUI Wrapper using `core/`
+├── desktop/          # Iced desktop app using `core/`
 └── axon-android/     # Rust Android Service Wrapper using `core/`
 ```

@@ -104,24 +104,29 @@ Because Axon is designed to run anywhere, the logic is heavily modularized into 
 
 ### 💻 End-User Applications
 
-- **`cli/`**: A lightweight Rust wrapper that runs the `core` engine in the terminal.
+- **`cli/`**: A terminal node. Flags override `REGISTRY_URL` and `SECRET_KEY`.
   - **How to run**:
 
     ```bash
-    # REGISTRY_URL defaults to http://127.0.0.1:7400
-    # SECRET_KEY defaults to Nishanth
+    cargo run -p cli -- --help
     cargo run -p cli
+    cargo run -p cli -- --registry http://127.0.0.1:7400 --socks-port 1080
     ```
 
-- **`desktop/`**: A desktop window for the node. It registers with the Actix registry, opens the local SOCKS proxy, and shows the node log.
+- **`desktop/`**: An Iced window for the node. It registers with the Actix registry, opens the local SOCKS proxy, and shows the node log. Settings are saved under the Axon config directory.
   - **How to run**:
 
     ```bash
     cargo run -p desktop
     ```
 
-- **`axon-android/`**: The Android application and Rust/JNI bindings that allow the `core` engine to run as a background service on mobile.
-  - **How to run**: Open the `axon-android` directory in Android Studio and run it on a device or emulator.
+- **`axon-android/`**: An Android screen for the same node. The activity stores the registry, secret, and ports, and a foreground service keeps the Rust node running.
+  - Build the native library into the app, then open `axon-android/` in Android Studio:
+
+    ```bash
+    cargo install cargo-ndk
+    cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o axon-android/app/src/main/jniLibs build -p axon_android --release
+    ```
 
 ### 📦 Utilities & Others
 

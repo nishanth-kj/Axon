@@ -27,6 +27,78 @@ struct AppState {
     last_health_check: Option<std::time::Instant>,
 }
 
+/// Settings for one Axon node. The CLI, desktop app, and Android app all
+/// build this before calling [`NodeConfig::run`].
+#[derive(Clone)]
+pub struct NodeConfig {
+    pub registry_url: String,
+    pub secret: String,
+    pub verify_port: u16,
+    pub relay_port: u16,
+    pub socks_port: u16,
+    pub use_tor: bool,
+    pub use_vpn: bool,
+}
+
+impl NodeConfig {
+    pub fn parse(
+        registry_url: &str,
+        secret: &str,
+        verify_port: u16,
+        relay_port: u16,
+        socks_port: u16,
+        use_tor: bool,
+        use_vpn: bool,
+    ) -> Result<Self, String> {
+        let registry_url = registry_url.trim().trim_end_matches('/').to_string();
+        if !(registry_url.starts_with("http://") || registry_url.starts_with("https://")) {
+            return Err("Registry URL must start with http:// or https://.".into());
+        }
+        let secret = secret.trim().to_string();
+        if secret.is_empty() {
+            return Err(
+                "Master secret is required. It must match the registry SECRET_KEY.".into(),
+            );
+        }
+        for (name, port) in [
+            ("Verify", verify_port),
+            ("Relay", relay_port),
+            ("SOCKS", socks_port),
+        ] {
+            if port == 0 {
+                return Err(format!(
+                    "{name} port must be a number from 1 to 65535."
+                ));
+            }
+        }
+        if verify_port == relay_port || verify_port == socks_port || relay_port == socks_port {
+            return Err("Verify, relay, and SOCKS ports must be different.".into());
+        }
+        Ok(Self {
+            registry_url,
+            secret,
+            verify_port,
+            relay_port,
+            socks_port,
+            use_tor,
+            use_vpn,
+        })
+    }
+
+    pub async fn run(self) {
+        run_node(
+            &self.registry_url,
+            self.verify_port,
+            self.relay_port,
+            self.socks_port,
+            &self.secret,
+            self.use_tor,
+            self.use_vpn,
+        )
+        .await
+    }
+}
+
 pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client_port: u16, master_secret: &str, use_tor: bool, use_vpn: bool) {
     let state = Arc::new(Mutex::new(AppState { secret_key: None, last_health_check: None }));
     let state_clone = state.clone();
@@ -168,5 +240,53 @@ pub async fn run_node(server_url: &str, axum_port: u16, server_port: u16, client
     log::info!("Node verification callback listening on {}", addr);
     if let Err(error) = axum::serve(listener, app).await {
         log::error!("Verification listener stopped: {error}");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::NodeConfig;
+
+    #[test]
+    fn rejects_a_registry_without_a_scheme() {
+        let error = match NodeConfig::parse(
+            "127.0.0.1:7400",
+            "secret",
+            8080,
+            8081,
+            1080,
+            false,
+            false,
+        ) {
+            Err(error) => error,
+            Ok(_) => panic!("a registry without a scheme should be rejected"),
+        };
+        assert!(error.contains("http"));
+    }
+
+    #[test]
+    fn rejects_duplicate_ports() {
+        assert!(
+            NodeConfig::parse("http://127.0.0.1:7400", "secret", 8080, 8080, 1080, false, false)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn trims_the_registry_url_and_secret() {
+        let config = NodeConfig::parse(
+            " http://127.0.0.1:7400/ ",
+            " secret ",
+            8080,
+            8081,
+            1080,
+            true,
+            false,
+        )
+        .unwrap();
+        assert_eq!(config.registry_url, "http://127.0.0.1:7400");
+        assert_eq!(config.secret, "secret");
+        assert!(config.use_tor);
+        assert!(!config.use_vpn);
     }
 }

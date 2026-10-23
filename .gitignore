@@ -28,6 +28,7 @@ build/
 # Android
 android/.gradle/
 android/app/build/
+axon-android/app/src/main/jniLibs/
 
 # iOS
 ios/Pods/

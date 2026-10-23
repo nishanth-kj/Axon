@@ -1,3 +1,19 @@
 <resources>
-    <string name="app_name">axon-android</string>
+    <string name="app_name">Axon</string>
+    <string name="subtitle">Local proxy node</string>
+    <string name="connection">Connection</string>
+    <string name="registry">Registry</string>
+    <string name="secret">Master secret</string>
+    <string name="secret_hint">Matches SECRET_KEY</string>
+    <string name="verify">Verify</string>
+    <string name="relay">Relay</string>
+    <string name="socks">SOCKS</string>
+    <string name="tor">Exit relay traffic through Tor</string>
+    <string name="tor_detail">Requires a Tor daemon on 127.0.0.1:9050.</string>
+    <string name="start">Start node</string>
+    <string name="stop">Stop node</string>
+    <string name="this_machine">This machine</string>
+    <string name="browser_hint">Point the browser SOCKS5 host at 127.0.0.1 and this port. Turn remote DNS on. The registry must already be running.</string>
+    <string name="log">Log</string>
+    <string name="log_empty">No log lines yet.</string>
 </resources>
