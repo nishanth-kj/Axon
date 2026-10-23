@@ -57,14 +57,14 @@ export default function NodesPage() {
     return sortOrder === "asc" ? <ChevronUp className="w-4 h-4 inline ml-1" /> : <ChevronDown className="w-4 h-4 inline ml-1" />;
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case "ACTIVE":
         return <Badge variant="default" className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 hover:text-emerald-500 border-emerald-500/20 border">ACTIVE</Badge>;
       case "PENDING":
         return <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 hover:text-amber-500 border-amber-500/20 border">PENDING</Badge>;
       default:
-        return <Badge variant="destructive" className="bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-500 border-red-500/20 border">{status}</Badge>;
+        return <Badge variant="destructive" className="bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-500 border-red-500/20 border">{status || "UNKNOWN"}</Badge>;
     }
   };
 
@@ -86,7 +86,7 @@ export default function NodesPage() {
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-2" />
               {pagination.total} Nodes Registered
             </Badge>
-            <Button onClick={fetchNodes} disabled={loading} variant="outline" size="sm" className="gap-2 rounded-xl">
+            <Button onClick={() => fetchNodes()} disabled={loading} variant="outline" size="sm" className="gap-2 rounded-xl">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
